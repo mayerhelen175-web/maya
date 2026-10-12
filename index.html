@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
 <title>Maya Bedtime Stories</title>
+<script>/* Story API endpoint (Vercel function api/story.js). Empty = demo uses sample stories only. */ window.MAYA_API = window.MAYA_API || '';</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap">
 <style>
@@ -208,7 +210,10 @@ function setP(k,v){ var a=k.split('.'), o=S; for(var i=0;i<a.length-1;i++) o=o[a
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 function name(){ var n=(S.child.name||'').trim(); return esc(n||'your hero'); }
 var PR = {she:['she','her','her'],he:['he','him','his'],they:['they','them','their']};
-function fill(t){ var p=PR[S.child.pron]||PR.she; return t.replace(/\{N\}/g,name()).replace(/\{S\}/g,p[0]).replace(/\{O\}/g,p[1]).replace(/\{P\}/g,p[2]); }
+function fill(t){ var p=PR[S.child.pron]||PR.she; return t.replace(/\{N\}/g,name()).replace(/\{HERO\}/g,name()).replace(/\{S\}/g,p[0]).replace(/\{O\}/g,p[1]).replace(/\{P\}/g,p[2]); }
+var LCODE={English:'en',Spanish:'es',Russian:'ru'}, LNAME={en:'English',es:'Español',ru:'Русский'}, LVOICE={en:'en-US',es:'es-US',ru:'ru-RU'};
+/* Languages a story is shown in: AI stories carry their own; samples exist in en/es. */
+function stLangs(st){ if(st.langs) return st.langs; return S.story.langs.indexOf('Spanish')>=0?['en','es']:['en']; }
 function chip(label,on,k,v,act){ return '<button type="button" class="chip'+(on?' on':'')+'" aria-pressed="'+on+'" data-act="'+(act||'set')+'" data-k="'+k+'" data-v="'+esc(v)+'">'+label+'</button>'; }
 function seg(items,cur,k){ return '<div class="seg">'+items.map(function(it){var on=it[0]===cur;return '<button type="button" class="'+(on?'on':'')+'" aria-pressed="'+on+'" data-act="set" data-k="'+k+'" data-v="'+it[0]+'">'+it[1]+'</button>';}).join('')+'</div>'; }
 function check(id,k,text){ var v=getP(k); return '<label class="check" for="'+id+'"><input type="checkbox" id="'+id+'" data-act="chk" data-k="'+k+'"'+(v?' checked':'')+'><span>'+text+'</span></label>'; }
@@ -410,24 +415,24 @@ V.new = function(){
    +[['story','Story with pictures','read + listen'],['film','Story + mini film','30–90 sec'],['audio','Audio only','screen off']].map(function(f){var on=f[0]===s.fmt;return '<button type="button" class="opt'+(on?' on':'')+'" aria-pressed="'+on+'" data-act="set" data-k="story.fmt" data-v="'+f[0]+'"><b style="font-size:14px">'+f[1]+'</b><span class="tiny muted">'+f[2]+'</span></button>';}).join('')+'</div></div>'
    +'<div class="field"><span class="label">Languages</span><div class="row">'+['English','Spanish','Russian'].map(function(l){return chip(l,s.langs.indexOf(l)>=0,'story.langs',l,'tog2');}).join('')+'</div>'
    +(s.langs.length===2?seg([['one','One at a time'],['both','Both, stacked'],['switch','Switch per page']],s.lay,'story.lay'):'')
-   +(s.langs.indexOf('Russian')>=0?'<span class="tiny muted">Demo text exists in English and Spanish only.</span>':'')+'</div>'
+   +(s.langs.indexOf('Russian')>=0&&!window.MAYA_API?'<span class="tiny muted">Demo text exists in English and Spanish only.</span>':'')+'</div>'
    +'<p class="tiny muted">Only original characters. Stories never cover death, illness or loss.</p>'
    +'<button type="button" class="btn full" data-act="generate">Create “'+cat.items[s.ti]+'”</button></div>';
 };
 
 V.reader = function(){
   var st=STORIES[S.current], r=S.reader, pages=st.pages, ended=r.p>=pages.length;
-  var esOn=S.story.langs.indexOf('Spanish')>=0;
-  var lang = esOn ? r.lang : 'en';
+  var SL=stLangs(st), two=SL.length>1, lang = two ? r.lang : '0';
   var pic = st.scene==='night'?sceneNight(150+Math.min(r.p,3)*40):(st.scene==='day'?sceneDay(r.p):sceneStorm(r.p));
   var text = ended
     ? '<div class="stack" style="align-items:center;text-align:center;padding:20px 0"><span style="font-family:var(--f-display);font-style:italic;font-size:36px;color:var(--accent)">The End</span><p class="muted" style="max-width:300px">'+(st.scene==='night'?'Good night, '+name()+'. Nothing plays next. It’s time to sleep.':'Nothing plays next. Time to try it for real!')+'</p><div class="row" style="justify-content:center"><button type="button" class="btn ghost" data-go="home">Library</button><button type="button" class="btn ghost" data-go="film">Make a mini film</button></div></div>'
-    : (lang!=='es'?'<p class="page-en" lang="en">'+fill(pages[r.p][0])+'</p>':'')+(lang!=='en'&&esOn?'<p class="page-es" lang="es">'+fill(pages[r.p][1])+'</p>':'');
+    : (lang!=='1'?'<p class="page-en" lang="'+SL[0]+'">'+fill(pages[r.p][0])+'</p>':'')+(lang!=='0'&&two?'<p class="page-es" lang="'+SL[1]+'">'+fill(pages[r.p][1])+'</p>':'');
   return '<div class="stack">'
    +'<div class="row" style="justify-content:space-between">'+back('home','Back to home')+'<span class="eyebrow">'+st.mood+' · made with AI</span><button type="button" class="round" aria-label="Download story" data-act="sheet" data-v="dl">'+ic('dl',20)+'</button></div>'
    +'<div class="readwrap"><div>'+pic+'</div><div class="stack">'
    +'<h1 style="font-size:24px">'+fill(st.title)+'</h1>'
-   +(esOn?seg([['en','English'],['es','Español'],['both','Both']],r.lang,'reader.lang'):'')
+   +(two?seg([['0',LNAME[SL[0]]],['1',LNAME[SL[1]]],['both','Both']],r.lang,'reader.lang'):'')
+   +(st.ai&&r.p===0&&st.note?'<p class="tiny muted">'+esc(st.note)+'</p>':'')
    +'<div class="stack" style="gap:12px;min-height:150px">'+text+'</div>'
    +'<div class="row" style="justify-content:space-between"><button type="button" class="round" aria-label="Previous page" data-act="page" data-v="-1">'+ic('prev',18)+'</button><span style="font-family:var(--f-display);font-style:italic" class="muted">'+(ended?'the end':'page '+(r.p+1)+' of '+pages.length)+'</span><button type="button" class="round" aria-label="Next page" data-act="page" data-v="1">'+ic('next',18)+'</button></div>'
    +'<div class="row" style="flex-wrap:nowrap"><div class="player" style="flex:1 1 auto;min-width:0"><button type="button" class="pbtn" data-act="play" aria-label="'+(r.playing?'Stop narration':'Play narration')+'">'+(r.playing?'<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>':'<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z" fill="currentColor"/></svg>')+'</button><span class="small" style="font-weight:700">Narrator · Soft Night</span></div>'
@@ -648,7 +653,9 @@ document.addEventListener('click',function(e){
     case 'open': S.current=v; S.reader={p:0,lang:'both',playing:false,audio:false,timer:'15'}; go('reader'); return;
     case 'generate':
       S.generating=true; S.genStep=0; render();
-      var tick=function(){ S.genStep++; if(S.route!=='new'){ S.generating=false; return; } if(S.genStep<3){ render(); setTimeout(tick,700); } else { S.generating=false; S.current=CATS[S.story.cat].story; S.reader={p:0,lang:S.story.lay==='one'?'en':'both',playing:false,audio:false,timer:'15'}; if(S.story.fmt==='film'){ S.film.k=0; go('film'); } else { go('reader'); if(S.story.fmt==='audio'){ S.reader.audio=true; startNarration(); render(); } } } };
+      var aiDone=null, aiWait=!!window.MAYA_API, finish=function(){ S.generating=false; var id=aiDone&&aiDone.id; if(!id){ id=CATS[S.story.cat].story; if(aiDone&&aiDone.fail) toast('Live AI story unavailable — showing a sample story.'); } S.current=id; S.reader={p:0,lang:S.story.lay==='one'?'0':'both',playing:false,audio:false,timer:'15'}; if(S.story.fmt==='film'){ S.film.k=0; go('film'); } else { go('reader'); if(S.story.fmt==='audio'){ S.reader.audio=true; startNarration(); render(); } } };
+      if(aiWait) requestStory().then(function(id){ aiDone={id:id}; }, function(){ aiDone={fail:true}; });
+      var tick=function(){ S.genStep++; if(S.route!=='new'){ S.generating=false; return; } if(S.genStep<3 || (aiWait&&!aiDone)){ S.genStep=Math.min(S.genStep,2); render(); setTimeout(tick,700); } else finish(); };
       setTimeout(tick,700); return;
     case 'page': var n=STORIES[S.current].pages.length; S.reader.p=Math.max(0,Math.min(n,S.reader.p+parseInt(v,10))); hush(); S.reader.playing=false; break;
     case 'play': if(S.reader.playing){ hush(); S.reader.playing=false; } else startNarration(); break;
@@ -690,11 +697,28 @@ document.addEventListener('submit',function(e){
   if(f==='helper'){ S.helper.log.push(['me',txt],['bot','Thanks! In this demo I answer only a few questions. Try the buttons above. The live helper connects later.']); render(); }
 });
 function pauseReply(me,bot){ S.pause.log.push(['me',me],['bot',bot]); render(); }
+/* Live AI story: only structured, allowlisted fields go to the server. The child's name never leaves this device — the server writes {HERO}, filled in here. */
+var aiN=0;
+function requestStory(){
+  var s=S.story, cat=CATS[s.cat], ctl=new AbortController(), to=setTimeout(function(){ ctl.abort(); },45000);
+  var body={ age:parseInt(S.child.age,10)||4, pron:S.child.pron, cat:s.cat, topic:cat.items[s.ti], mood:s.mood,
+    langs:s.langs.map(function(l){return LCODE[l];}).filter(Boolean).slice(0,2), family:(S.child.fam||[]).slice() };
+  return fetch(window.MAYA_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctl.signal})
+    .then(function(r){ clearTimeout(to); if(!r.ok) throw new Error('status '+r.status); return r.json(); })
+    .then(function(d){
+      var st=(d&&d.story)||d; if(!st||!Array.isArray(st.pages)||!st.pages.length) throw new Error('bad story');
+      var id='ai'+(++aiN);
+      STORIES[id]={ ai:true, title:esc(st.title||cat.items[s.ti]), tag:cat.items[s.ti], mood:({night:'Bedtime',day:'Daytime',sos:'SOS'})[s.mood], scene:s.mood==='night'?'night':(s.cat==='feels'?'storm':'day'), langs:st.langs,
+        pages:st.pages.map(function(p){ return p.map(function(t){ return esc(t||'').replace(/\n+/g,'<br>'); }); }),
+        note:st.ritual?('Tonight’s ritual: '+st.ritual):'' , tip:st.parent_tip||'' };
+      return id;
+    });
+}
 function startNarration(){
   var st=STORIES[S.current], r=S.reader; if(r.p>=st.pages.length){ r.playing=false; return; }
-  var pg=st.pages[r.p], esOn=S.story.langs.indexOf('Spanish')>=0, lang=esOn?r.lang:'en', q=[];
-  if(lang!=='es') q.push([fill(pg[0]).replace(/<[^>]+>/g,''),'en-US']);
-  if(lang!=='en'&&esOn) q.push([fill(pg[1]).replace(/<[^>]+>/g,''),'es-US']);
+  var pg=st.pages[r.p], SL=stLangs(st), two=SL.length>1, lang=two?r.lang:'0', q=[];
+  if(lang!=='1') q.push([fill(pg[0]).replace(/<[^>]+>/g,''),LVOICE[SL[0]]]);
+  if(lang!=='0'&&two) q.push([fill(pg[1]).replace(/<[^>]+>/g,''),LVOICE[SL[1]]]);
   r.playing = speak(q) || true;
 }
 var clockT=null;

@@ -6,7 +6,9 @@ prepaid passes with no auto-renewal, and a scripted helper.
 
 ## Status
 - `index.html` — single-file working demo (no build step). Open it in a browser or deploy as a static site.
-- AI generation, payments, file downloads, photo matching and the live agent are **stubbed** and marked "Demo" in the UI.
+- `api/story.js` — live AI story generation with a safety moderator (Vercel function). Off until `window.MAYA_API` is set; see `docs/ai-setup.md`.
+- Payments, file downloads, photo matching and the live agent are **stubbed** and marked "Demo" in the UI.
+- The site is not indexed by search engines (`noindex` + `robots.txt`).
 - `docs/concept-us.md` — product concept, data map, consent system, US legal requirements and open questions for counsel.
 
 ## Run locally
@@ -17,6 +19,6 @@ npx serve .
 ```
 
 ## Next steps
-1. Connect story generation (LLM) with the safety moderator described in the concept.
+1. Deploy `api/story.js` and set `window.MAYA_API` (see `docs/ai-setup.md`).
 2. Add auth, database and payments (one-time passes, no subscriptions).
 3. Connect the Maya Helper agent and SMS channel (TCPA-compliant).
